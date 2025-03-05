@@ -1,0 +1,13 @@
+{
+  "app": "camesp32",
+  "port": 80,
+  "build": {
+    "location": "iran"
+  },
+  "disks": [
+    {
+      "name": "espcam",
+      "mountTo": "path/to/folder"
+    }
+  ]
+}
