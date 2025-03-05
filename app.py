@@ -4,7 +4,7 @@ import numpy as np
 
 app = Flask(__name__)
 
-@app.route('/color_detection', methods=['POST'])
+@app.route('/color_detection')
 def color_detection():
     # دریافت تصویر از ESP32-CAM
     image_data = request.data
