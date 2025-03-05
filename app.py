@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-return '<h1>Welcome to the Simple Flask App!</h1><a href="/show">Go to Show Page</a>'
+return '<h1>Welcome</h1>'
 
 
 @app.route('/detect', methods=['POST'])
