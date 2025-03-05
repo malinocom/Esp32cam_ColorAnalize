@@ -5,9 +5,5 @@
     "location": "iran"
   },
   "disks": [
-    {
-      "name": "espcam",
-      "mountTo": "path/to/folder"
-    }
   ]
 }
