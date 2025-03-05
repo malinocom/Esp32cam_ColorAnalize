@@ -1,58 +1,43 @@
+from flask import Flask, request
 import cv2
 import numpy as np
-import requests
 
+app = Flask(__name__)
 
-# آدرس IP ESP32-CAM
-url = "http://<ESP32_IP>/capture" # آدرس IP خود را وارد کنید
+@app.route('/color_detection', methods=['POST'])
+def color_detection():
+    # دریافت تصویر از ESP32-CAM
+    image_data = request.data
+    image = cv2.imdecode(np.frombuffer(image_data, np.uint8), cv2.IMREAD_COLOR)
 
+    # تبدیل تصویر به فضای رنگ HSV
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-# دریافت تصویر از ESP32-CAM
-response = requests.get(url)
-image_array = np.array(bytearray(response.content), dtype=np.uint8)
-image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+    # تعریف محدوده رنگ زرد
+    lower_yellow = np.array([20, 100, 100])
+    upper_yellow = np.array([30, 255, 255])
+    mask_yellow = cv2.inRange(hsv, lower_yellow, upper_yellow)
 
+    # تعریف محدوده رنگ سبز
+    lower_green = np.array([40, 100, 100])
+    upper_green = np.array([80, 255, 255])
+    mask_green = cv2.inRange(hsv, lower_green, upper_green)
 
-# تبدیل تصویر به فضای رنگ HSV
-hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    # ترکیب ماسک‌ها
+    mask = cv2.bitwise_or(mask_yellow, mask_green)
 
+    # بررسی وجود رنگ‌ها
+    yellow_detected = np.any(mask_yellow)
+    green_detected = np.any(mask_green)
 
-# تعریف محدوده رنگ قرمز
-lower_red1 = np.array([0, 100, 100])
-upper_red1 = np.array([10, 255, 255])
-lower_red2 = np.array([160, 100, 100])
-upper_red2 = np.array([180, 255, 255])
+    if yellow_detected and green_detected:
+        return "Both Yellow and Green detected"
+    elif yellow_detected:
+        return "Yellow detected"
+    elif green_detected:
+        return "Green detected"
+    else:
+        return "No color detected"
 
-
-# تعریف محدوده رنگ زرد
-lower_yellow = np.array([20, 100, 100])
-upper_yellow = np.array([30, 255, 255])
-
-
-# ایجاد ماسک برای رنگ قرمز
-mask_red1 = cv2.inRange(hsv_image, lower_red1, upper_red1)
-mask_red2 = cv2.inRange(hsv_image, lower_red2, upper_red2)
-mask_red = cv2.bitwise_or(mask_red1, mask_red2)
-
-
-# ایجاد ماسک برای رنگ زرد
-mask_yellow = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
-
-
-# ترکیب ماسک‌ها
-mask = cv2.bitwise_or(mask_red, mask_yellow)
-
-
-# بررسی وجود رنگ‌ها
-if np.any(mask):
-    color_detected = "Red or Yellow detected"
-else:
-    color_detected = "No Red or Yellow detected"
-
-
-# ارسال نتیجه به ESP32-CAM
-response = requests.post("http://<ESP32_IP>/result", json={"result": color_detected})
-
-
-# نمایش نتیجه در کنسول (اختیاری)
-print(color_detected)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)  # آدرس IP و پورت سرور
