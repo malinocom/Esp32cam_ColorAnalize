@@ -1,8 +1,14 @@
 from flask import Flask, render_template
-app = Flask(name)
 
-@app.route('/show') def show_page(): return render_template('page.html') # نام فایل HTML شما
+app = Flask(__name__)
 
-if name == 'main': app.run(debug=True)
+@app.route('/')
+def home():
+    return '<h1>Welcome to the Simple Flask App!</h1><a href="/show">Go to Show Page</a>'
 
-Run
+@app.route('/show')
+def show_page():
+    return render_template('page.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
