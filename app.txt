@@ -1,0 +1,51 @@
+import cv2
+import numpy as np
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/detect', methods=['POST'])
+def detect_colors():
+    # دریافت تصویر به صورت باینری
+    image_data = request.data
+
+    # تبدیل داده‌های باینری به آرایه NumPy
+    image_array = np.frombuffer(image_data, np.uint8)
+    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+
+    # بررسی بارگذاری صحیح تصویر
+    if image is None:
+        return jsonify({"result": "error", "message": "Image could not be decoded."})
+
+    # تبدیل تصویر به فضای رنگ HSV
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+    # تعریف محدوده رنگ قرمز
+    lower_red = np.array([0, 50, 50])
+    upper_red = np.array([10, 100, 100])
+    
+    # تعریف محدوده رنگ سبز
+    lower_green = np.array([90, 70, 50])
+    upper_green = np.array([150, 100, 100])
+
+    # ایجاد ماسک برای رنگ قرمز و سبز
+    mask_red = cv2.inRange(hsv_image, lower_red, upper_red)
+    mask_green = cv2.inRange(hsv_image, lower_green, upper_green)
+
+    # بررسی وجود رنگ قرمز و سبز
+    red_detected = np.any(mask_red)
+    green_detected = np.any(mask_green)
+
+    if red_detected and green_detected:
+        color_detected = "red and green"
+    elif red_detected:
+        color_detected = "red"
+    elif green_detected:
+        color_detected = "green"
+    else:
+        color_detected = "no"
+
+    return jsonify({"result": color_detected})
+
+if __name__ == '__main__':
+    app.run(debug=True)
